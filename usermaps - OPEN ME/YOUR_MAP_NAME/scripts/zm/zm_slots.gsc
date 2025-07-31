@@ -50,8 +50,6 @@ This moves it to the top right
 #define SLOT_HUD_X 400
 #define SLOT_HUD_Y -300
 */
-
-
 /@
     Author: Coolyer
 
@@ -176,20 +174,24 @@ function slot_machine_use(player, trig)
 
 function show_slot_machine_hud(player, trig)
 {
-    // Create 3 HUD elements for the 3 reels
+    // Create 3x3 HUD elements for the 3 reels (top, middle, bottom)
     reel = [];
     for(i = 0; i < 3; i++)
     {
-        reel[i] = NewClientHudElem(player);
-        reel[i].alignX = "center";
-        reel[i].alignY = "middle";
-        reel[i].horzAlign = "center";
-        reel[i].vertAlign = "middle";
-        reel[i].x = (i - 1) * 70 + SLOT_HUD_X; // <-- use define for X offset
-        reel[i].y = SLOT_HUD_Y;                // <-- use define for Y offset
-        reel[i].fontScale = 2.0;
-        reel[i].alpha = 1.0;
-        reel[i].archived = false;
+        reel[i] = [];
+        for(j = 0; j < 3; j++)
+        {
+            reel[i][j] = NewClientHudElem(player);
+            reel[i][j].alignX = "center";
+            reel[i][j].alignY = "middle";
+            reel[i][j].horzAlign = "center";
+            reel[i][j].vertAlign = "middle";
+            reel[i][j].x = (i - 1) * 70 + SLOT_HUD_X;
+            reel[i][j].y = ((j - 1) * 70) + SLOT_HUD_Y; // -1=top, 0=middle, 1=bottom
+            reel[i][j].fontScale = 2.0;
+            reel[i][j].alpha = 1.0;
+            reel[i][j].archived = false;
+        }
     }
 
     icons = [];
@@ -207,6 +209,11 @@ function show_slot_machine_hud(player, trig)
 
     player PlayLocalSound(SLOTSPINNING);
 
+    // Pick a random start index for each reel
+    reel_indices = [];
+    for(i = 0; i < 3; i++)
+        reel_indices[i] = RandomInt(icons.size);
+
     // Number of spins for each reel (reel 0 spins longest, reel 2 shortest)
     spins = [];
     spins[spins.size] = 14;
@@ -217,19 +224,28 @@ function show_slot_machine_hud(player, trig)
     {
         for(i = 0; i < 3; i++)
         {
-            // Only spin this reel if we haven't reached its stop count
             if(spin < spins[i])
             {
-                icon = icons[RandomInt(icons.size)];
-                reel[i] SetShader(icon, 64, 64);
+                // Advance the reel's index (move the wheel down)
+                reel_indices[i] = (reel_indices[i] + 1) % icons.size;
+
+                // Show top, middle, bottom icons for this reel
+                for(j = -1; j <= 1; j++)
+                {
+                    icon_index = (reel_indices[i] + j + icons.size) % icons.size;
+                    icon = icons[icon_index];
+                    reel[i][j+1] SetShader(icon, 64, 64);
+                }
+
                 if(spin == spins[i] - 1)
                 {
-                    spin_result[i] = icon; // Save final icon for each reel
-                    player PlayLocalSound(SLOTREELSTOP); 
+                    // The icon in the middle row is the result
+                    spin_result[i] = icons[reel_indices[i]];
+                    player PlayLocalSound(SLOTREELSTOP);
                 }
             }
         }
-        wait(0.12 + (spin * 0.01)); // Slightly increase wait for a "slowing" effect
+        wait(0.12 + (spin * 0.01));
     }
     // ****************
     //  Reward Logic  *
@@ -338,9 +354,10 @@ function show_slot_machine_hud(player, trig)
     }
 
     // Destroy HUD elements
-    for(i = 0; i < 3; i++) reel[i] Destroy();
+    for(i = 0; i < 3; i++)
+        for(j = 0; j < 3; j++)
+            reel[i][j] Destroy();
 
-    // Allow spinning again
     trig.is_spinning = false;
 }
 
