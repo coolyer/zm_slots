@@ -37,20 +37,23 @@ Players can spend points to spin for random rewards such as points, powerups, or
 ---
 ## ✨ Features
 
-- Fully functional slot machine for Black Ops 3 Zombies maps
-- Easy integration with Radiant and your map’s scripts
-- Customizable odds for each icon (change `#define ODDS_*` values)
-- Customizable spin price and pair reward
-- Multiple slot machines supported per map
-- Customizable HUD position (`SLOT_HUD_X` and `SLOT_HUD_Y`)
-- Reward logic for:
+- **Fully functional slot machine** for Black Ops 3 Zombies maps
+- **Easy integration** with Radiant and your map’s scripts
+- Supports both **weighted odds** (classic slot randomness) and **non-weighted odds** (easy icon editing)
+- **Customizable odds** for each icon (`#define ODDS_*` values)
+- **Customizable spin price** and pair reward
+- **Multiple slot machines** supported per map
+- **Customizable HUD position** (`SLOT_HUD_X` and `SLOT_HUD_Y`)
+- **Realistic spinning animation:** reels roll and land naturally on the result
+- Only the **middle row determines the win**; top and bottom icons are randomized for realism
+- **Reward logic** for:
   - 3 of a kind (unique rewards for each icon)
   - 2 of a kind (pair reward)
   - Nothing (lose message and sound)
-- Example rewards: points, free weapon, powerups (double points, instakill, max ammo), weapon upgrade
-- Easy to add new icons and new reward effects
-- Sound support for spinning, reel stop, win, and lose (add your own sounds)
-- Clean, commented code for easy modification
+- **Example rewards:** points, free weapon, powerups (double points, instakill, max ammo), weapon upgrade
+- **Easy to add new icons** and new reward effects
+- **Sound support** for spinning, reel stop, win, and lose (add your own sounds)
+- **Clean, commented code** for easy modification
 ---
 ## Credits
 
