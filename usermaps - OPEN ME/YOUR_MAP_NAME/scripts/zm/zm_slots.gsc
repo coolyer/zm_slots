@@ -7,6 +7,11 @@
 #using scripts\zm\_zm_weapons;
 #using scripts\shared\aat_shared;
 #using scripts\zm\_zm_powerups;
+#using scripts\zm\_zm_utility;
+
+#using scripts\codescripts\struct;
+
+#insert scripts\shared\shared.gsh;
 
 #precache("material","cherry");
 #precache("material","lemon");
@@ -17,39 +22,60 @@
 #precache("material","clover");
 #precache("material","coin");
 #precache("material","banana");
+// #precache ("material", "myicon");
 
-//Price + Reward
-#define PRICE 500 // Change this to whatever price you want the machine to be!
-#define PAIR_REWARD 250 // Change this to whatever you want the pair reward to be!
-// change these to whatever you want 1 = 10% 2 =20% 
-#define ODDS_CHERRY 1
-#define ODDS_LEMON  1
-#define ODDS_BAR    1
-#define ODDS_SEVEN  1
-#define ODDS_BELL   1
-#define ODDS_CLOVER 1
-#define ODDS_DIAMOND 1
-#define ODDS_COIN   1
-#define ODDS_BANANA 1
-// #define ODDS_MYICON 1
+//-----------------------------
+// Slot Machine Configuration
+//-----------------------------
 
-// Sound defines change these to the name of the sounds you want to use/call
-#define SLOTREELSTOP "slot_reel_stop"
-#define SLOTSPINNING "slot_spinning"
-#define SLOTLOST "slot_lose_buzz"
-#define SLOTWIN "slot_win_jingle"
+// Price & Rewards
+#define PRICE         500   // Cost to spin the machine
+#define PAIR_REWARD   250   // Reward for a pair
+#define SINGLESLOT    false  // true = single row, false = 3x3 grid
 
+// HUD Hint Text
+#define SLOT_MACHINE_HINT "Press &&1 to spin the Slot Machine [^3" + PRICE + "^7 points]"
 
-// SLOT MACHINE HUD POSITION - Change these values to move the slot machine HUD on the screen
-#define SLOT_HUD_X 0    // Horizontal offset (pixels)
-//   Negative = move left, Positive = move right
-#define SLOT_HUD_Y 0    // Vertical offset (pixels)
-//   Negative = move up, Positive = move down
+// Odds (only used if USE_WEIGHTED_ODDS is false)
+#define CHANCE_THREE_IN_A_ROW  0.05 // 5% chance for 3 in a row (jackpot)
+#define CHANCE_PAIR            0.15 // 15% chance for a pair
+// The rest will be "no win"
+
+// Icon List for Non-Weighted Odds
+// To add another icon, just add it to the list below (e.g., "banana", "myicon")
+#define ICONS_NO_WEIGHT "cherry", "lemon", "bar", "seven", "bell", "clover", "diamond", "coin", "banana"
+
+// Weighted Odds (classic slot machine style)
+// Set to true to use Weighted odds false for none weighted
+#define USE_WEIGHTED_ODDS false
+
+// Set the weight for each icon (higher = more common)
+#define ODDS_CHERRY   1
+#define ODDS_LEMON    1
+#define ODDS_BAR      1
+#define ODDS_SEVEN    1
+#define ODDS_BELL     1
+#define ODDS_CLOVER   1
+#define ODDS_DIAMOND  1
+#define ODDS_COIN     1
+#define ODDS_BANANA   1
+// #define ODDS_MYICON 1   // Example for adding a new icon
+
+// Sound Definitions
+#define SLOTREELSTOP  "slot_reel_stop"
+#define SLOTSPINNING  "slot_spinning"
+#define SLOTLOST      "slot_lose_buzz"
+#define SLOTWIN       "slot_win_jingle"
+
+// Slot Machine HUD Position
+#define SLOT_HUD_X    0    // Horizontal offset (pixels): negative = left, positive = right
+#define SLOT_HUD_Y    0    // Vertical offset (pixels): negative = up, positive = down
 /*
-This moves it to the top right
-#define SLOT_HUD_X 400
-#define SLOT_HUD_Y -300
+    Example: Move HUD to top right
+    #define SLOT_HUD_X 400
+    #define SLOT_HUD_Y -300
 */
+
 /@
     Author: Coolyer
 
@@ -85,20 +111,37 @@ This moves it to the top right
             material,clover
             material,coin
             material,banana
-
-    4. Customizing Odds:
-       - At the top of this script, change the ODDS_* defines to adjust how likely each icon is to appear.
-         (Higher number = more likely. All 1 = equal chance.)
-
-    5. Customizing Price:
-       - Change the PRICE define at the top to set how many points a spin costs.
+       - Add any new icon materials you use (see below).
 
     ========================
-    NOTES:
+    CUSTOMIZING ODDS & ICONS:
     ========================
-    - You can have as many slot machines as you want; just give each trigger the targetname "slot_machine".
-    - Each machine can be spun independently.
-    - Rewards and odds can be customized in this script.
+    - At the top of this script, set USE_WEIGHTED_ODDS to true or false:
+        #define USE_WEIGHTED_ODDS false
+
+    - **Non-weighted odds (recommended for easy editing):**
+        - Edit the ICONS_NO_WEIGHT define:
+            #define ICONS_NO_WEIGHT "cherry", "lemon", "bar", "seven", "bell", "clover", "diamond", "coin", "banana"
+        - To add a new icon, just add it to the list (e.g., "banana", "myicon").
+        - The script will automatically use all icons in this list with equal chance.
+
+    - **Weighted odds:**
+        - Set USE_WEIGHTED_ODDS to true.
+        - Add or edit the ODDS_* defines for each icon at the top of the script:
+            #define ODDS_CHERRY 1
+            #define ODDS_MYICON 2
+        - In the icons array setup (find the "// Weighted odds" comment), add:
+            for(i = 0; i < ODDS_MYICON; i++) icons[icons.size] = "myicon";
+        - Higher numbers mean the icon appears more often on the reels.
+
+    ========================
+    ADDING NEW ICONS:
+    ========================
+    1. Add your icon to the ICONS_NO_WEIGHT define (for non-weighted odds), or add a new ODDS_* define and for() loop (for weighted odds).
+    2. Precache your material at the top of the script:
+         #precache("material","myicon");
+    3. Add your material to your .zone file:
+         material,myicon
 
     ========================
     ADDING NEW REWARDS:
@@ -116,27 +159,16 @@ This moves it to the top right
         wait(1.5);
     }
 
-    Replace "icon" with your icon's name and add your effect code
+    Replace "icon" with your icon's name and add your effect code.
+
     ========================
-    ADDING NEW ICON:
+    NOTES:
     ========================
-    To add a new icon to the slot machine reels:
+    - You can have as many slot machines as you want; just give each trigger the targetname "slot_machine".
+    - Each machine can be spun independently.
+    - Rewards and odds can be customized in this script.
+    - Weighted odds = realistic slot odds. Non-weighted odds = easiest for adding/removing icons.
 
-    1. At the top of this script, add a new odds define for your icon, for example:
-         #define ODDS_MYICON 1
-
-    2. Around line 165 (where the icons array is built), add this line:
-         for(i = 0; i < ODDS_MYICON; i++) icons[icons.size] = "myicon";
-
-       Replace "MYICON" with your icon's name in all caps, and "myicon" with the actual icon/material name.
-
-    3. Make sure you precache your material at the top:
-         #precache("material","myicon");
-
-    4. Add your material to your .zone file:
-         material,myicon
-
-    Now your new icon will appear on the slot machine reels!
 @/
 
 function init_slot_machines()
@@ -144,14 +176,68 @@ function init_slot_machines()
     slot_machines = GetEntArray("slot_machine", "targetname");
     for(i = 0; i < slot_machines.size; i++)
     {
-        slot_machines[i] SetHintString("Press &&1 to spin the Slot Machine [" + PRICE + " points]");
+        slot_machines[i] SetHintString(SLOT_MACHINE_HINT);
         slot_machines[i] UseTriggerRequireLookAt();
         slot_machines[i] SetCursorHint("HINT_NOICON");
         slot_machines[i] SetVisibleToAll();
         slot_machines[i] thread slot_machine_trigger_think();
     }
+   
 }
+function get_slot_spin_result(icons)
+{
+    rand = RandomFloat(1.0);
+    spin_result = [];
 
+    if(rand < CHANCE_THREE_IN_A_ROW)
+    {
+        // Force 3 in a row
+        icon = icons[RandomInt(icons.size)];
+        spin_result = [];
+        spin_result[0] = icon;
+        spin_result[1] = icon;
+        spin_result[2] = icon;
+    }
+    else if(rand < CHANCE_THREE_IN_A_ROW + CHANCE_PAIR)
+    {
+        // Force a pair (two same, one different)
+        icon_pair = icons[RandomInt(icons.size)];
+        icon_other = icon_pair;
+        while(icon_other == icon_pair)
+            icon_other = icons[RandomInt(icons.size)];
+        // Randomize which position is the odd one
+        odd = RandomInt(3);
+        for(i = 0; i < 3; i++)
+        {
+            if(i == odd)
+                spin_result[i] = icon_other;
+            else
+                spin_result[i] = icon_pair;
+        } 
+    }
+    else
+    {
+        // All different
+        pool = [];
+        while(pool.size < 3)
+        {
+            icon = icons[RandomInt(icons.size)];
+            is_duplicate = false;
+            for(k = 0; k < pool.size; k++)
+            {
+                if(pool[k] == icon)
+                {
+                    is_duplicate = true;
+                    break;
+                }
+            }
+            if(!is_duplicate)
+                pool[pool.size] = icon;
+        }
+        spin_result = pool;
+    }
+    return spin_result;
+}
 
 // Main function to use the slot machine
 function slot_machine_use(player, trig)
@@ -176,36 +262,67 @@ function show_slot_machine_hud(player, trig)
 {
     // Create 3x3 HUD elements for the 3 reels (top, middle, bottom)
     reel = [];
-    for(i = 0; i < 3; i++)
+    if (!IS_TRUE(SINGLESLOT))
     {
-        reel[i] = [];
-        for(j = 0; j < 3; j++)
+        for(i = 0; i < 3; i++)
         {
-            reel[i][j] = NewClientHudElem(player);
-            reel[i][j].alignX = "center";
-            reel[i][j].alignY = "middle";
-            reel[i][j].horzAlign = "center";
-            reel[i][j].vertAlign = "middle";
-            reel[i][j].x = (i - 1) * 70 + SLOT_HUD_X;
-            reel[i][j].y = ((j - 1) * 70) + SLOT_HUD_Y; // -1=top, 0=middle, 1=bottom
-            reel[i][j].fontScale = 2.0;
-            reel[i][j].alpha = 1.0;
-            reel[i][j].archived = false;
+            reel[i] = [];
+            for(j = 0; j < 3; j++)
+            {
+                reel[i][j] = NewClientHudElem(player);
+                reel[i][j].alignX = "center";
+                reel[i][j].alignY = "middle";
+                reel[i][j].horzAlign = "center";
+                reel[i][j].vertAlign = "middle";
+                reel[i][j].x = (i - 1) * 70 + SLOT_HUD_X;
+                reel[i][j].y = ((j - 1) * 70) + SLOT_HUD_Y; // -1=top, 0=middle, 1=bottom
+                reel[i][j].fontScale = 2.0;
+                reel[i][j].alpha = 1.0;
+                reel[i][j].archived = false;
+            }
         }
     }
-
+    else
+    {
+        for(i = 0; i < 3; i++)
+        {
+            reel[i] = NewClientHudElem(player);
+            reel[i].alignX = "center";
+            reel[i].alignY = "middle";
+            reel[i].horzAlign = "center";
+            reel[i].vertAlign = "middle";
+            reel[i].x = (i - 1) * 70 + SLOT_HUD_X; // <-- use define for X offset
+            reel[i].y = SLOT_HUD_Y;                // <-- use define for Y offset
+            reel[i].fontScale = 2.0;
+            reel[i].alpha = 1.0;
+            reel[i].archived = false;
+        }
+    }
+    //************************
+    // Weighted odds         
+    // Add new icons here if using weighted odds 
+    //************************ 
     icons = [];
-    for(i = 0; i < ODDS_CHERRY; i++)  icons[icons.size] = "cherry";
-    for(i = 0; i < ODDS_LEMON; i++)   icons[icons.size] = "lemon";
-    for(i = 0; i < ODDS_BAR; i++)     icons[icons.size] = "bar";
-    for(i = 0; i < ODDS_SEVEN; i++)   icons[icons.size] = "seven";
-    for(i = 0; i < ODDS_BELL; i++)    icons[icons.size] = "bell";
-    for(i = 0; i < ODDS_CLOVER; i++)  icons[icons.size] = "clover";
-    for(i = 0; i < ODDS_DIAMOND; i++) icons[icons.size] = "diamond";
-    for(i = 0; i < ODDS_COIN; i++)    icons[icons.size] = "coin";
-    for(i = 0; i < ODDS_BANANA; i++)  icons[icons.size] = "banana";
-
-    spin_result = [];
+    if(IS_TRUE(USE_WEIGHTED_ODDS))
+    {
+        for(i = 0; i < ODDS_CHERRY; i++)  icons[icons.size] = "cherry";
+        for(i = 0; i < ODDS_LEMON; i++)   icons[icons.size] = "lemon";
+        for(i = 0; i < ODDS_BAR; i++)     icons[icons.size] = "bar";
+        for(i = 0; i < ODDS_SEVEN; i++)   icons[icons.size] = "seven";
+        for(i = 0; i < ODDS_BELL; i++)    icons[icons.size] = "bell";
+        for(i = 0; i < ODDS_CLOVER; i++)  icons[icons.size] = "clover";
+        for(i = 0; i < ODDS_DIAMOND; i++) icons[icons.size] = "diamond";
+        for(i = 0; i < ODDS_COIN; i++)    icons[icons.size] = "coin";
+        for(i = 0; i < ODDS_BANANA; i++)  icons[icons.size] = "banana";
+        spin_result = [];
+        for(i = 0; i < 3; i++)
+            spin_result[i] = icons[RandomInt(icons.size)];
+    }
+    else 
+    {
+        icons = array(ICONS_NO_WEIGHT);
+        spin_result = get_slot_spin_result(icons);
+    }
 
     player PlayLocalSound(SLOTSPINNING);
 
@@ -220,33 +337,82 @@ function show_slot_machine_hud(player, trig)
     spins[spins.size] = 10;
     spins[spins.size] = 7;
 
+
+
+    for(i = 0; i < 3; i++)
+    {
+        // Find the index of the result icon in the icons array
+        result_index = 0;
+        for(k = 0; k < icons.size; k++)
+        {
+            if(icons[k] == spin_result[i])
+            {
+                result_index = k;
+                break;
+            }
+        }
+       
+        start_index = (result_index - (spins[i] - 1) + icons.size) % icons.size;
+        reel_indices[i] = start_index;
+    }
+
+    // SPINNING ANIMATION
     for(spin = 0; spin < spins[0]; spin++)
     {
         for(i = 0; i < 3; i++)
         {
             if(spin < spins[i])
             {
-                // Advance the reel's index (move the wheel down)
-                reel_indices[i] = (reel_indices[i] + 1) % icons.size;
-
-                // Show top, middle, bottom icons for this reel
-                for(j = -1; j <= 1; j++)
+                current_index = (reel_indices[i] + spin) % icons.size;
+                if (!IS_TRUE(SINGLESLOT))
                 {
-                    icon_index = (reel_indices[i] + j + icons.size) % icons.size;
-                    icon = icons[icon_index];
-                    reel[i][j+1] SetShader(icon, 64, 64);
+                    for(j = -1; j <= 1; j++)
+                    {
+                        icon_index = (current_index + j + icons.size) % icons.size;
+                        icon = icons[icon_index];
+                        reel[i][j+1] SetShader(icon, 64, 64);
+                    }
                 }
-
+                else
+                {
+                    icon = icons[current_index];
+                    reel[i] SetShader(icon, 64, 64);
+                }
                 if(spin == spins[i] - 1)
                 {
-                    // The icon in the middle row is the result
-                    spin_result[i] = icons[reel_indices[i]];
+                    // LAST SPIN: Center is the result, top/bottom are random (not the result)
+                    for(j = -1; j <= 1; j++)
+                    {
+                        if(j == 0)
+                            icon = spin_result[i];
+                        else
+                        {
+                            // Pick a random icon that is NOT the result for realism
+                            do {
+                                icon = icons[RandomInt(icons.size)];
+                            } while(icon == spin_result[i]);
+                        }
+                        reel[i][j+1] SetShader(icon, 64, 64);
+                    }
                     player PlayLocalSound(SLOTREELSTOP);
+                }
+                else
+                {
+                    // Normal spinning code
+                    for(j = -1; j <= 1; j++)
+                    {
+                        icon_index = (current_index + j + icons.size) % icons.size;
+                        icon = icons[icon_index];
+                        reel[i][j+1] SetShader(icon, 64, 64);
+                    }
                 }
             }
         }
         wait(0.12 + (spin * 0.01));
     }
+
+    
+
     // ****************
     //  Reward Logic  *
     // ****************
@@ -257,7 +423,7 @@ function show_slot_machine_hud(player, trig)
         IPrintLnBold("Jackpot! 3 Sevens! +1000 points");
         // Get all weapon objects from level.zombie_weapons
         thread effect_upgrade_weapon();
-        player PlayLocalSound("slot_win_jingle");
+        player PlayLocalSound(SLOTWIN);
         wait(1.5);
     }
     else if(spin_result[0] == "lemon" && spin_result[1] == "lemon" && spin_result[2] == "lemon")
@@ -354,9 +520,17 @@ function show_slot_machine_hud(player, trig)
     }
 
     // Destroy HUD elements
-    for(i = 0; i < 3; i++)
-        for(j = 0; j < 3; j++)
-            reel[i][j] Destroy();
+    if (!IS_TRUE(SINGLESLOT))
+    {
+        for(i = 0; i < 3; i++)
+            for(j = 0; j < 3; j++)
+                reel[i][j] Destroy();
+    }
+    else
+    {
+        for(i = 0; i < 3; i++)
+            reel[i] Destroy();
+    }
 
     trig.is_spinning = false;
 }
