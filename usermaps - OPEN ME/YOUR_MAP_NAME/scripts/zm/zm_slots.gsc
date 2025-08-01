@@ -35,7 +35,7 @@
 
 // HUD Hint Text
 #define SLOT_MACHINE_HINT "Press &&1 to spin the Slot Machine [^3" + PRICE + "^7 points]"
-
+#define LINES_COLOR "black" // Chnage the lines color can use "white"
 // Odds (only used if USE_WEIGHTED_ODDS is false)
 #define CHANCE_THREE_IN_A_ROW  0.05 // 5% chance for 3 in a row (jackpot)
 #define CHANCE_PAIR            0.15 // 15% chance for a pair
@@ -262,6 +262,7 @@ function show_slot_machine_hud(player, trig)
 {
     // Create 3x3 HUD elements for the 3 reels (top, middle, bottom)
     reel = [];
+    lines = []; // New: store line HUD elements
     if (!IS_TRUE(SINGLESLOT))
     {
         for(i = 0; i < 3; i++)
@@ -280,6 +281,30 @@ function show_slot_machine_hud(player, trig)
                 reel[i][j].alpha = 1.0;
                 reel[i][j].archived = false;
             }
+            // --- Add horizontal lines above and below the middle row ---
+            // Top line (between top and middle)
+            line_top = NewClientHudElem(player);
+            line_top.alignX = "center";
+            line_top.alignY = "middle";
+            line_top.horzAlign = "center";
+            line_top.vertAlign = "middle";
+            line_top.x = (i - 1) * 70 + SLOT_HUD_X;
+            line_top.y = SLOT_HUD_Y - 35; // halfway between top and middle
+            line_top SetShader(LINES_COLOR, 64, 2); // 64px wide, 2px tall line
+            line_top.alpha = 0.5;
+            lines[lines.size] = line_top;
+
+            // Bottom line (between middle and bottom)
+            line_bot = NewClientHudElem(player);
+            line_bot.alignX = "center";
+            line_bot.alignY = "middle";
+            line_bot.horzAlign = "center";
+            line_bot.vertAlign = "middle";
+            line_bot.x = (i - 1) * 70 + SLOT_HUD_X;
+            line_bot.y = SLOT_HUD_Y + 35; // halfway between middle and bottom
+            line_bot SetShader(LINES_COLOR, 64, 2);
+            line_bot.alpha = 0.5;
+            lines[lines.size] = line_bot;
         }
     }
     else
@@ -530,6 +555,12 @@ function show_slot_machine_hud(player, trig)
     {
         for(i = 0; i < 3; i++)
             reel[i] Destroy();
+    }
+    // Destroy horizontal lines
+    if (isDefined(lines))
+    {
+        for(i = 0; i < lines.size; i++)
+            lines[i] Destroy();
     }
 
     trig.is_spinning = false;
