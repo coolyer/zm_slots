@@ -3,6 +3,7 @@
 **Author:** Coolyer  
 **Please credit if used.**
 
+[Video of zm_slots](https://www.youtube.com/watch?v=-gKxhpqOwaM)
 ---
 
 ## What is this?
