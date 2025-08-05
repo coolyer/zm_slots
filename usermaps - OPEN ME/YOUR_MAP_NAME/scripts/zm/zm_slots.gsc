@@ -151,7 +151,7 @@
 
     else if(spin_result[0] == "icon" && spin_result[1] == "icon" && spin_result[2] == "icon")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         // Add your custom effect here, for example:
         // player PlayLocalSound(SLOTWIN);
         // player.score += 1234;
@@ -443,7 +443,7 @@ function show_slot_machine_hud(player, trig)
     // ****************
     if(spin_result[0] == "seven" && spin_result[1] == "seven" && spin_result[2] == "seven")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         player.score += 1000;
         IPrintLnBold("Jackpot! 3 Sevens! +1000 points");
         // Get all weapon objects from level.zombie_weapons
@@ -453,7 +453,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "lemon" && spin_result[1] == "lemon" && spin_result[2] == "lemon")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         player.score += 750;
         IPrintLnBold("3 Lemons! +750 points");
         player PlayLocalSound(SLOTWIN);
@@ -461,7 +461,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "bar" && spin_result[1] == "bar" && spin_result[2] == "bar")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         player.score += 500;
         IPrintLnBold("3 Bars! +500 points");
         player PlayLocalSound(SLOTWIN);
@@ -469,7 +469,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "cherry" && spin_result[1] == "cherry" && spin_result[2] == "cherry")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         player.score += 2500;
         IPrintLnBold("3 Cherrys! +2500 points");
         player PlayLocalSound(SLOTWIN);
@@ -477,7 +477,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "bell" && spin_result[1] == "bell" && spin_result[2] == "bell")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         IPrintLnBold("3 Bells! Free Gun");
         player PlayLocalSound(SLOTWIN);
         all_weapons = GetArrayKeys(level.zombie_weapons);
@@ -493,7 +493,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "clover" && spin_result[1] == "clover" && spin_result[2] == "clover")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         IPrintLnBold("3 Clovers! Double Points!");
         player PlayLocalSound(SLOTWIN);
         thread zm_powerups::specific_powerup_drop("double_points");
@@ -501,7 +501,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "diamond" && spin_result[1] == "diamond" && spin_result[2] == "diamond")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         IPrintLnBold("3 Diamonds! Instakill!");
         player PlayLocalSound(SLOTWIN);
         thread zm_powerups::specific_powerup_drop("insta_kill");
@@ -509,7 +509,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "coin" && spin_result[1] == "coin" && spin_result[2] == "coin")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         player.score += 1000;
         player PlayLocalSound(SLOTWIN);
         IPrintLnBold("3 Coins! +1000 points!");
@@ -517,7 +517,7 @@ function show_slot_machine_hud(player, trig)
     }
     else if(spin_result[0] == "banana" && spin_result[1] == "banana" && spin_result[2] == "banana")
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         IPrintLnBold("3 Bananas! Max Ammo!");
         player PlayLocalSound(SLOTWIN);
         thread zm_powerups::specific_powerup_drop("full_ammo");
@@ -530,7 +530,7 @@ function show_slot_machine_hud(player, trig)
         (spin_result[1] == spin_result[2] && spin_result[1] != spin_result[0])
     )
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         player.score += PAIR_REWARD;
         IPrintLnBold("Two of a kind! +" + PAIR_REWARD + " points");
         player PlayLocalSound(SLOTWIN);
@@ -538,7 +538,7 @@ function show_slot_machine_hud(player, trig)
     }
     else
     {
-        for(i = 0; i < 3; i++) reel[i] SetText("");
+        clear_slot_hud(reel, lines);
         IPrintLnBold("You lost! Try again!");
         player PlayLocalSound(SLOTLOST);
         wait(1.5);
@@ -549,18 +549,21 @@ function show_slot_machine_hud(player, trig)
     {
         for(i = 0; i < 3; i++)
             for(j = 0; j < 3; j++)
-                reel[i][j] Destroy();
+                if (isDefined(reel[i][j]) && !isArray(reel[i][j]))
+                    reel[i][j] Destroy();
     }
     else
     {
         for(i = 0; i < 3; i++)
-            reel[i] Destroy();
+            if (isDefined(reel[i]) && !isArray(reel[i]))
+                reel[i] Destroy();
     }
     // Destroy horizontal lines
     if (isDefined(lines))
     {
         for(i = 0; i < lines.size; i++)
-            lines[i] Destroy();
+            if (isDefined(lines[i]) && !isArray(lines[i]))
+                lines[i] Destroy();
     }
 
     trig.is_spinning = false;
@@ -624,4 +627,28 @@ function give_random_aat()
     self aat::acquire(weapon, mod);
     self IPrintLnBold("^2You received a random alternate ammo type");
   
+}
+function clear_slot_hud(reel, lines)
+{
+    // Clear reels
+    if (!IS_TRUE(SINGLESLOT))
+    {
+        for(i = 0; i < 3; i++)
+            for(j = 0; j < 3; j++)
+                if (isDefined(reel[i][j]) && !isArray(reel[i][j]))
+                    reel[i][j] SetText("");
+    }
+    else
+    {
+        for(i = 0; i < 3; i++)
+            if (isDefined(reel[i]) && !isArray(reel[i]))
+                reel[i] SetText("");
+    }
+    // Destroy lines
+    if (isDefined(lines))
+    {
+        for(i = 0; i < lines.size; i++)
+            if (isDefined(lines[i]) && !isArray(lines[i]))
+                lines[i] Destroy();
+    }
 }
