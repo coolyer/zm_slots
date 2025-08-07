@@ -142,24 +142,24 @@
          #precache("material","myicon");
     3. Add your material to your .zone file:
          material,myicon
-
+    4. Open APE (Asset Property Editor) and, in the GDT browser, search for "gambling" to find all the slot machine icon images.
+       - Duplicate an existing icon material.
+       - Assign your own custom image/texture to the duplicated material.
+       - Be sure to update the material’s image property to use your new icon.
+       - Save and build your assets.
     ========================
     ADDING NEW REWARDS:
     ========================
     To add a new effect for a specific icon combo, copy this template and place it
+    I have left a commented function just uncomment it if you want to use it.
     with the other reward checks in the reward logic section:
 
-    else if(spin_result[0] == "icon" && spin_result[1] == "icon" && spin_result[2] == "icon")
-    {
-        clear_slot_hud(reel, lines);
-        // Add your custom effect here, for example:
-        // player PlayLocalSound(SLOTWIN);
-        // player.score += 1234;
-        // IPrintLnBold("3 Icons! Custom reward!");
-        wait(1.5);
+    else if(is_triple(spin_result, "myicon"))
+    { 
+        player.score += 500;
+        IPrintLnBold("3 myicon! +500 points");  
     }
-
-    Replace "icon" with your icon's name and add your effect code.
+    Replace "myicon" with your icon's name and add your effect code.
 
     ========================
     NOTES:
@@ -436,113 +436,111 @@ function show_slot_machine_hud(player, trig)
         wait(0.12 + (spin * 0.01));
     }
 
-    
-
     // ****************
     //  Reward Logic  *
     // ****************
-    if(spin_result[0] == "seven" && spin_result[1] == "seven" && spin_result[2] == "seven")
+    clear_slot_hud(reel, lines);
+    sound_to_play = SLOTWIN;
+    
+    if(is_triple(spin_result, "seven"))
     {
-        clear_slot_hud(reel, lines);
         player.score += 1000;
         IPrintLnBold("Jackpot! 3 Sevens! +1000 points");
-        // Get all weapon objects from level.zombie_weapons
-        thread effect_upgrade_weapon();
-        player PlayLocalSound(SLOTWIN);
-        wait(1.5);
+ 
+        weapon = self getCurrentWeapon();
+        upgraded_weapon = zm_weapons::get_upgrade_weapon(weapon);
+        if (isDefined(upgraded_weapon))
+        {
+            self TakeWeapon(weapon);
+            self zm_weapons::weapon_give(upgraded_weapon);
+            self SwitchToWeapon(upgraded_weapon);
+        }
+        else
+        {
+            self IPrintLnBold("No upgraded version found for this weapon!");
+        }
+        
+        //thread effect_upgrade_weapon();
+        // can use threads for other functions as well like open door or anything. 
+
     }
-    else if(spin_result[0] == "lemon" && spin_result[1] == "lemon" && spin_result[2] == "lemon")
+    else if(is_triple(spin_result, "lemon"))
     {
-        clear_slot_hud(reel, lines);
         player.score += 750;
         IPrintLnBold("3 Lemons! +750 points");
-        player PlayLocalSound(SLOTWIN);
-        wait(1.5);
+
     }
-    else if(spin_result[0] == "bar" && spin_result[1] == "bar" && spin_result[2] == "bar")
-    {
-        clear_slot_hud(reel, lines);
+    else if(is_triple(spin_result, "bar"))
+    { 
         player.score += 500;
         IPrintLnBold("3 Bars! +500 points");
-        player PlayLocalSound(SLOTWIN);
-        wait(1.5);
+        
     }
-    else if(spin_result[0] == "cherry" && spin_result[1] == "cherry" && spin_result[2] == "cherry")
-    {
-        clear_slot_hud(reel, lines);
+    else if(is_triple(spin_result, "cherry"))
+    { 
         player.score += 2500;
         IPrintLnBold("3 Cherrys! +2500 points");
-        player PlayLocalSound(SLOTWIN);
-        wait(1.5);
     }
-    else if(spin_result[0] == "bell" && spin_result[1] == "bell" && spin_result[2] == "bell")
+    else if(is_triple(spin_result, "bell"))
     {
-        clear_slot_hud(reel, lines);
         IPrintLnBold("3 Bells! Free Gun");
-        player PlayLocalSound(SLOTWIN);
+        
         all_weapons = GetArrayKeys(level.zombie_weapons);
 
         // Pick a random weapon
         rand_index = RandomInt(all_weapons.size);
         random_weapon = all_weapons[rand_index];
 
-        // Give the weapon to the player
-        player zm_weapons::weapon_give(random_weapon);
-        player SwitchToWeapon(random_weapon);
-        wait(1.5);
+        
+        
     }
-    else if(spin_result[0] == "clover" && spin_result[1] == "clover" && spin_result[2] == "clover")
+    else if(is_triple(spin_result,"clover"))
     {
-        clear_slot_hud(reel, lines);
+        
         IPrintLnBold("3 Clovers! Double Points!");
-        player PlayLocalSound(SLOTWIN);
-        thread zm_powerups::specific_powerup_drop("double_points");
-        wait(1.5);
+        thread zm_powerups::specific_powerup_drop("double_points",player.origin);
+        
     }
-    else if(spin_result[0] == "diamond" && spin_result[1] == "diamond" && spin_result[2] == "diamond")
+    else if(is_triple(spin_result,"diamond"))
     {
-        clear_slot_hud(reel, lines);
         IPrintLnBold("3 Diamonds! Instakill!");
-        player PlayLocalSound(SLOTWIN);
-        thread zm_powerups::specific_powerup_drop("insta_kill");
-        wait(1.5);
+        thread zm_powerups::specific_powerup_drop("insta_kill",player.origin);
+        
     }
-    else if(spin_result[0] == "coin" && spin_result[1] == "coin" && spin_result[2] == "coin")
+    else if(is_triple(spin_result,"coin"))
     {
-        clear_slot_hud(reel, lines);
+        
         player.score += 1000;
-        player PlayLocalSound(SLOTWIN);
         IPrintLnBold("3 Coins! +1000 points!");
-        wait(1.5);
+        
     }
-    else if(spin_result[0] == "banana" && spin_result[1] == "banana" && spin_result[2] == "banana")
+    else if(is_triple(spin_result,"banana"))
     {
-        clear_slot_hud(reel, lines);
+        
         IPrintLnBold("3 Bananas! Max Ammo!");
-        player PlayLocalSound(SLOTWIN);
-        thread zm_powerups::specific_powerup_drop("full_ammo");
-        wait(1.5);
+        thread zm_powerups::specific_powerup_drop("full_ammo", player.origin);
+        
     }
+    /*else if(is_triple(spin_result, "myicon"))
+    { 
+        player.score += 500;
+        IPrintLnBold("3 myicons! +500 points");
+        
+    }
+    */
     // Any two matching (but not three)
-    else if(
-        (spin_result[0] == spin_result[1] && spin_result[0] != spin_result[2]) ||
-        (spin_result[0] == spin_result[2] && spin_result[0] != spin_result[1]) ||
-        (spin_result[1] == spin_result[2] && spin_result[1] != spin_result[0])
-    )
+    else if(is_pair(spin_result))
     {
-        clear_slot_hud(reel, lines);
-        player.score += PAIR_REWARD;
-        IPrintLnBold("Two of a kind! +" + PAIR_REWARD + " points");
-        player PlayLocalSound(SLOTWIN);
-        wait(1.5);
+    player.score += PAIR_REWARD;
+    IPrintLnBold("Two of a kind! +" + PAIR_REWARD + " points");
     }
+    // This is the lost part of the reward section
     else
     {
-        clear_slot_hud(reel, lines);
         IPrintLnBold("You lost! Try again!");
-        player PlayLocalSound(SLOTLOST);
-        wait(1.5);
+        sound_to_play = SLOTLOST;  
     }
+    player PlayLocalSound(sound_to_play);
 
     // Destroy HUD elements
     if (!IS_TRUE(SINGLESLOT))
@@ -569,8 +567,6 @@ function show_slot_machine_hud(player, trig)
     trig.is_spinning = false;
 }
 
-
-
 function slot_machine_trigger_think()
 {
     trig = self;
@@ -586,48 +582,6 @@ function IPrintLnBoldToPlayer(player, msg)
     player IPrintLnBold(msg);
 }
 
-
-// This is the effect to allow upgrading weapon and adding AAT.
-function effect_upgrade_weapon()
-{
-    weapon = self getCurrentWeapon();
-    upgraded_weapon = zm_weapons::get_upgrade_weapon(weapon); 
-    self PlayLocalSound("upgrade");
-    // Check if weapon is already PAP
-    if (zm_weapons::is_weapon_upgraded(weapon))
-    {
-        self IPrintLn("^2Weapon is already Pack-a-Punched! Adding a random alternate ammo type...");
-        self thread give_random_aat();
-        return;
-    }
-// Only if this exists!
-    if(isDefined(upgraded_weapon))
-    {
-        self TakeWeapon(weapon);
-        self zm_weapons::weapon_give(upgraded_weapon);
-        self SwitchToWeapon(upgraded_weapon);
-    }
-}
-function give_random_aat()
-{
-    weapon = self getCurrentWeapon();
-    if (!isDefined(weapon)) return;
-
-    // List of AAT mods
-    aat_mods = array("zm_aat_blast_furnace", "zm_aat_dead_wire", "zm_aat_fire_works", "zm_aat_thunder_wall","zm_aat_turned");
-
-    // Pick a random AAT
-    idx = randomInt(aat_mods.size);
-    mod = aat_mods[idx];
-
-   
-    // Give the new AAT mod
-    self aat::remove(weapon);
-
-    self aat::acquire(weapon, mod);
-    self IPrintLnBold("^2You received a random alternate ammo type");
-  
-}
 function clear_slot_hud(reel, lines)
 {
     // Clear reels
@@ -651,4 +605,16 @@ function clear_slot_hud(reel, lines)
             if (isDefined(lines[i]) && !isArray(lines[i]))
                 lines[i] Destroy();
     }
+}
+function is_triple(spin_result, icon)
+{
+        return spin_result[0] == icon && spin_result[1] == icon && spin_result[2] == icon;
+}
+function is_pair(spin_result)
+{
+    return (
+        (spin_result[0] == spin_result[1] && spin_result[0] != spin_result[2]) ||
+        (spin_result[0] == spin_result[2] && spin_result[0] != spin_result[1]) ||
+        (spin_result[1] == spin_result[2] && spin_result[1] != spin_result[0])
+    );
 }
