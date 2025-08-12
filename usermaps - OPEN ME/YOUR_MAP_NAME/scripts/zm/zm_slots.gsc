@@ -8,7 +8,7 @@
 #using scripts\shared\aat_shared;
 #using scripts\zm\_zm_powerups;
 #using scripts\zm\_zm_utility;
-
+#using scripts\zm\_zm_perks;
 #using scripts\codescripts\struct;
 
 #insert scripts\shared\shared.gsh;
@@ -22,6 +22,8 @@
 #precache("material","clover");
 #precache("material","coin");
 #precache("material","banana");
+#precache("material", "skull");
+#precache("material", "death");
 // #precache ("material", "myicon");
 
 //-----------------------------
@@ -32,18 +34,21 @@
 #define PRICE         500   // Cost to spin the machine
 #define PAIR_REWARD   250   // Reward for a pair
 #define SINGLESLOT    false  // true = single row, false = 3x3 grid
+#define PERKLIMITMAX 12      // Set this to the maximum perk limit allowed in your map (used for the clover slot reward)
+
 
 // HUD Hint Text
 #define SLOT_MACHINE_HINT "Press &&1 to spin the Slot Machine [^3" + PRICE + "^7 points]"
 #define LINES_COLOR "black" // Chnage the lines color can use "white"
 // Odds (only used if USE_WEIGHTED_ODDS is false)
 #define CHANCE_THREE_IN_A_ROW  0.05 // 5% chance for 3 in a row (jackpot)
-#define CHANCE_PAIR            0.15 // 15% chance for a pair
+#define CHANCE_PAIR            0.20 // 20% chance for a pair
+ 
 // The rest will be "no win"
 
 // Icon List for Non-Weighted Odds
 // To add another icon, just add it to the list below (e.g., "banana", "myicon")
-#define ICONS_NO_WEIGHT "cherry", "lemon", "bar", "seven", "bell", "clover", "diamond", "coin", "banana"
+#define ICONS_NO_WEIGHT "cherry", "lemon", "bar", "seven", "bell", "clover", "diamond", "coin", "banana","skull","death"
 
 // Weighted Odds (classic slot machine style)
 // Set to true to use Weighted odds false for none weighted
@@ -59,6 +64,8 @@
 #define ODDS_DIAMOND  1
 #define ODDS_COIN     1
 #define ODDS_BANANA   1
+#define ODDS_SKULL   1
+#define ODDS_DEATH   1
 // #define ODDS_MYICON 1   // Example for adding a new icon
 
 // Sound Definitions
@@ -111,6 +118,8 @@
             material,clover
             material,coin
             material,banana
+            material,skull
+            material,death
        - Add any new icon materials you use (see below).
 
     ========================
@@ -339,6 +348,8 @@ function show_slot_machine_hud(player, trig)
         for(i = 0; i < ODDS_DIAMOND; i++) icons[icons.size] = "diamond";
         for(i = 0; i < ODDS_COIN; i++)    icons[icons.size] = "coin";
         for(i = 0; i < ODDS_BANANA; i++)  icons[icons.size] = "banana";
+        for(i = 0; i < ODDS_SKULL; i++)  icons[icons.size] = "skull";
+        for(i = 0; i < ODDS_DEATH; i++)  icons[icons.size] = "death";
         spin_result = [];
         for(i = 0; i < 3; i++)
             spin_result[i] = icons[RandomInt(icons.size)];
@@ -445,7 +456,7 @@ function show_slot_machine_hud(player, trig)
     if(is_triple(spin_result, "seven"))
     {
         player.score += 1000;
-        IPrintLnBold("Jackpot! 3 Sevens! +1000 points");
+        player IPrintLnBold("Jackpot! 3 Sevens! +1000 points");
  
         weapon = self getCurrentWeapon();
         upgraded_weapon = zm_weapons::get_upgrade_weapon(weapon);
@@ -467,43 +478,82 @@ function show_slot_machine_hud(player, trig)
     else if(is_triple(spin_result, "lemon"))
     {
         player.score += 750;
-        IPrintLnBold("3 Lemons! +750 points");
+        player IPrintLnBold("3 Lemons! +750 points");
 
+    }
+    else if(is_triple(spin_result, "death"))
+    {
+       player IPrintLnBold("3 Deaths! You are downed!");
+        // Deal lethal damage to the player to down them
+       player DoDamage(player.health + 666, player.origin, undefined);
+       sound_to_play = SLOTLOST; 
     }
     else if(is_triple(spin_result, "bar"))
     { 
         player.score += 500;
-        IPrintLnBold("3 Bars! +500 points");
+        player IPrintLnBold("3 Bars! +500 points");
         
     }
     else if(is_triple(spin_result, "cherry"))
     { 
         player.score += 2500;
-        IPrintLnBold("3 Cherrys! +2500 points");
+        player IPrintLnBold("3 Cherrys! +2500 points");
     }
     else if(is_triple(spin_result, "bell"))
     {
-        IPrintLnBold("3 Bells! Free Gun");
+        player IPrintLnBold("3 Bells! Free Gun");
         
         all_weapons = GetArrayKeys(level.zombie_weapons);
 
         // Pick a random weapon
         rand_index = RandomInt(all_weapons.size);
         random_weapon = all_weapons[rand_index];
-
-        
-        
+        player zm_weapons::weapon_give(random_weapon);
+        player SwitchToWeapon(random_weapon);
     }
     else if(is_triple(spin_result,"clover"))
     {
         
-        IPrintLnBold("3 Clovers! Double Points!");
-        thread zm_powerups::specific_powerup_drop("double_points",player.origin);
+        if (level.perk_purchase_limit >= PERKLIMITMAX)
+        {
+            player.score += 500;
+            player IPrintLnBold("3 Clovers! +500 points (perk limit maxed)");
+        }
+        else
+        {
+            player IPrintLnBold("3 Clovers! +1 Perk Slot!");
+            level.perk_purchase_limit = min(PERKLIMITMAX, level.perk_purchase_limit + 1);
+        }
         
+    }
+    else if(is_triple(spin_result,"skull"))
+    {
+        if (level.perk_purchase_limit > 1)
+        {
+            player IPrintLnBold("3 Skulls! Lose Perk Slot");
+            level.perk_purchase_limit = max(1, level.perk_purchase_limit - 1);
+        }
+        else
+        {
+            // Remove a random perk from the player
+            perks = self zm_perks::get_perk_array();
+            if (perks.size == 0)
+            {
+                player IPrintLnBold("3 Skulls! No perks to remove but half your points.");
+                player.score = Int(player.score / 2);
+                
+            }
+            else
+            {
+               player IPrintLnBold("3 Skulls! Lost a random perk: ");
+               self zm_perks::lose_random_perk(); 
+            }
+        }  
+        sound_to_play = SLOTLOST; 
     }
     else if(is_triple(spin_result,"diamond"))
     {
-        IPrintLnBold("3 Diamonds! Instakill!");
+        player IPrintLnBold("3 Diamonds! Instakill!");
         thread zm_powerups::specific_powerup_drop("insta_kill",player.origin);
         
     }
@@ -511,13 +561,14 @@ function show_slot_machine_hud(player, trig)
     {
         
         player.score += 1000;
-        IPrintLnBold("3 Coins! +1000 points!");
+        player IPrintLnBold("3 Coins! Double Points!");
+        thread zm_powerups::specific_powerup_drop("double_points",player.origin);
         
     }
     else if(is_triple(spin_result,"banana"))
     {
         
-        IPrintLnBold("3 Bananas! Max Ammo!");
+        player IPrintLnBold("3 Bananas! Max Ammo!");
         thread zm_powerups::specific_powerup_drop("full_ammo", player.origin);
         
     }
@@ -532,12 +583,12 @@ function show_slot_machine_hud(player, trig)
     else if(is_pair(spin_result))
     {
     player.score += PAIR_REWARD;
-    IPrintLnBold("Two of a kind! +" + PAIR_REWARD + " points");
+    player IPrintLnBold("Two of a kind! +" + PAIR_REWARD + " points");
     }
     // This is the lost part of the reward section
     else
     {
-        IPrintLnBold("You lost! Try again!");
+        player IPrintLnBold("You lost! Try again!");
         sound_to_play = SLOTLOST;  
     }
     player PlayLocalSound(sound_to_play);
