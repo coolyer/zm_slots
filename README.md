@@ -21,6 +21,40 @@ Players can spend points to spin for random rewards such as points, powerups, or
 4. Add the necessary entries to your `.zone` file as shown in the script comments.
 5. **Sounds are not included**; you must provide your own sound files for the slot machine effects.
 
+## 🔧 Integration
+### 1. Radiant
+-------------------
+- Place one or more trigger_use entities where you want slot machines.
+- Set their targetname to:
+
+    slot_machine
+
+### 2. Map Script (GSC)
+-------------------
+- Add this line near the top with your other #using lines:
+
+    #using scripts\zm\zm_slots;
+
+- In your main setup function (main() or startround()), add:
+
+    thread zm_slots::init_slot_machines();
+
+### 3. Zone File (.zone)
+--------------------
+Add the following lines:
+
+    scriptparsetree,scripts/zm/zm_slots.gsc
+    material,cherry
+    material,lemon
+    material,bar
+    material,seven
+    material,bell
+    material,diamond
+    material,clover
+    material,coin
+    material,banana
+    material,skull
+    material,death
 ---
 
 ## Customization
