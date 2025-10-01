@@ -39,7 +39,7 @@
 
 // HUD Hint Text
 #define SLOT_MACHINE_HINT "Press &&1 to spin the Slot Machine [^3" + PRICE + "^7 points]"
-#define LINES_COLOR "black" // Chnage the lines color can use "white"
+#define LINES_COLOR "black" // Change the lines color can use "white"
 // Odds (only used if USE_WEIGHTED_ODDS is false)
 #define CHANCE_THREE_IN_A_ROW  0.05 // 5% chance for 3 in a row (jackpot)
 #define CHANCE_PAIR            0.20 // 20% chance for a pair
@@ -152,7 +152,7 @@
     3. Add your material to your .zone file:
          material,myicon
     4. Open APE (Asset Property Editor) and, in the GDT browser, search for "gambling" to find all the slot machine icon images.
-       - Duplicate an existing icon material.
+       - Duplicate an existing icon material & image.
        - Assign your own custom image/texture to the duplicated material.
        - Be sure to update the material’s image property to use your new icon.
        - Save and build your assets.
